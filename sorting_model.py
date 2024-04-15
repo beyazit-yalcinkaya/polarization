@@ -1,9 +1,8 @@
 import random
 import numpy as np
-import collections
 import networkx as nx
-from collections import defaultdict 
 import math
+import matplotlib.pyplot as plt
 
 # This contains the logic of the model described in Törnberg, P. (2022) "How digital media drive affective polarization through partisan sorting" PNAS.
 # Please see the paper for detailed description of the model.
@@ -129,3 +128,27 @@ class SortingModel:
         between = np.mean([self.fraction_shared_flex(a,b) for a,b in self.between])
         return within - between
 
+    def draw(self, file_name="network", show_edges=False, show_fig=False):
+        pos = nx.random_layout(self.network) if self.custom_network else {node:node for node in self.network.nodes}
+        node_colors = {}
+        node_shapes = {}
+        node_shape_chars = "Xos^>v<dph8"
+        for node in self.network.nodes:
+            nodeid = self.nodeid[node]
+            char = node_shape_chars[self.agent_fixed[nodeid]]
+            if char not in node_shapes.keys():
+                node_shapes[char] = []
+            node_shapes[char].append(node)
+            if char not in node_colors.keys():
+                node_colors[char] = []
+            node_colors[char].append(self.agent_flex[nodeid]/self.m)
+        for node_shape in node_shapes.keys():
+            nx.draw_networkx_nodes(self.network, pos=pos, nodelist=node_shapes[node_shape], node_shape=node_shape, node_color=node_colors[node_shape])
+        if show_edges:
+            nx.draw_networkx_edges(self.network, pos=pos)
+        if show_fig:
+            plt.show()
+        else:
+            if file_name[-4:] != ".pdf":
+                file_name += ".pdf"
+            plt.savefig(file_name, bbox_inches='tight')
