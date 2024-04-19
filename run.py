@@ -17,7 +17,7 @@ if __name__ == "__main__":
     agent = Recommender(n=n, gamma=gamma)
 
     obs = env.reset()
-    for _ in range(10000):
+    for _ in range(100):
         action = agent(obs)
         obs = env.step(action)
 
