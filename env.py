@@ -10,21 +10,21 @@ from copy import deepcopy
 
 class Population(gym.Env):
 
-    def __init__(self, n=4, m=10, k=2, network=None, transform=None):
+    def __init__(self, n=4, m=10, k=2, speed=0.5, tolerance=1000, network=None, transform=None):
         self.n = n # Number of dynamic features
         self.m = m # Upper bound for dynamic features
         self.k = k # Upper bound for static features
-        self.speed = 0.1
-        self.tolerance = 100
+        self.speed = speed
+        self.tolerance = tolerance
 
         if network is None:
             self.network = grid_2d_moore_graph(w, w, periodic=periodic)
         else:
             self.network = network
         if transform is None:
-            self.transform = self._transform_tolerance
+            self.transform = lambda target, neighbors: self._transform_tolerance(target, neighbors) % self.m
         else:
-            self.transform = transform
+            self.transform = lambda target, neighbors: transform(target, neighbors) % self.m
         self.state = deepcopy(self.network)
 
     def reset(self):
@@ -103,7 +103,7 @@ class Population(gym.Env):
         tolerance_lower_bound = self.state.nodes[source]["dynamic"] - self.tolerance*(1 - self.state.nodes[source]["confidence"])
         tolerance_upper_bound = self.state.nodes[source]["dynamic"] + self.tolerance*(1 - self.state.nodes[source]["confidence"])
 
-        differences = np.array([1 if (tolerance_lower_bound[i] <= self.state.nodes[target]["dynamic"][i] and tolerance_upper_bound[i] >= self.state.nodes[target]["dynamic"][i]) else 0 for i in range(self.n)])
+        differences = np.array([1 if (tolerance_lower_bound[i] > self.state.nodes[target]["dynamic"][i] or tolerance_upper_bound[i] < self.state.nodes[target]["dynamic"][i]) else 0 for i in range(self.n)])
 
         target_dynamic_features = np.array(self.state.nodes[target]["dynamic"])
 
