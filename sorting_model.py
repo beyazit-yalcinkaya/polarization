@@ -152,3 +152,12 @@ class SortingModel:
             if file_name[-4:] != ".pdf":
                 file_name += ".pdf"
             plt.savefig(file_name, bbox_inches='tight')
+
+if __name__ == "__main__":
+    for _ in range(10):
+        sorting_model = SortingModel(gamma=1.0)
+        sorting_model.run(100000)
+        print(sorting_model.calculate_sorting())
+        sorting_model.draw(show_fig=True)
+        input()
+
