@@ -33,26 +33,26 @@ if __name__ == "__main__":
         for j in range(max_len):
             action = agent(obs)
             obs = env.step(action)
-            sorting_value = env.calculate_sorting()
-            sorting_values.append(sorting_value)
-            if sorting_value == 1.0:
-                last_step = j
-                break
+            # sorting_value = env.calculate_sorting()
+            # sorting_values.append(sorting_value)
+            # if sorting_value == 1.0:
+                # last_step = j
+                # break
         samples.append(sorting_value)
-        print(i, last_step, round(sorting_values[0], 4), round(sorting_values[-1], 4))
-        if last_step is None:
-            print(sorting_values)
+        print(env.calculate_sorting())
+        # if last_step is None:
+            # print(sorting_values)
 
-        # for node in obs.nodes:
-        #     obs.nodes[node]["dynamic"] = obs.nodes[node]["dynamic"] / m
-        # draw(G=obs, show_fig=True)
+        for node in obs.nodes:
+            obs.nodes[node]["dynamic"] = obs.nodes[node]["dynamic"] / m
+        draw(G=obs, show_fig=True)
 
     # for node in obs.nodes:
     #     obs.nodes[node]["dynamic"] = obs.nodes[node]["dynamic"] / m
 
     # draw(G=obs, show_fig=True)
 
-    print(len(samples), np.mean(samples), np.std(samples))
+    # print(len(samples), np.mean(samples), np.std(samples))
 
     # sorting_model = SortingModel(n=3, m=256, gamma=1.0)
 	# sorting_model.run(100000)
