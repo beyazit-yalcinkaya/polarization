@@ -1,4 +1,5 @@
 import sys
+import random
 import numpy as np
 from env import Population
 from agent import Recommender
@@ -7,54 +8,43 @@ from utils import *
 # Explore random graphs in the context of this research. You can use the knowledge from randomness and computation. This might be the opputinity to use probabilistic proof method FINALLY.
 
 if __name__ == "__main__":
-    n_samples = sys.argv[1]
-    max_len = sys.argv[2]
-    n_samples = int(n_samples)
-    max_len = int(max_len)
-    assert n_samples > 0 and max_len > 0
+    gamma = float(sys.argv[1])
+    h = int(sys.argv[2])
+    tolerance = int(sys.argv[3])
+    seed = int(sys.argv[4])
+    assert gamma >= 0.0 and gamma <= 1.0 and h >= 0 and tolerance >= 0 and seed >= 0
+    random.seed(seed)
+    np.random.seed(seed)
+    max_len = 1_000
     n = 3
     m = 256
     k = 2
     w = 10
-    gamma = 1.0
     periodic = True
     network = grid_2d_moore_graph(w, w, periodic=periodic)
-    # network = nx.grid_2d_graph(w, w, periodic=periodic)
 
-    env = Population(n=n, m=m, k=k, network=network)
-    agent = Recommender(n=n, gamma=gamma)
+    csv_path = "exps/csvs/"
+    fig_path = "exps/figs/"
+    file_name = f"exp_gamma_{gamma}_h_{h}_tolerance_{tolerance}_seed_{seed}"
 
-    samples = []
-    for i in range(n_samples):
-        obs = env.reset()
-        last_step = None
-        sorting_value = None
-        sorting_values = []
-        for j in range(max_len):
-            action = agent(obs)
-            obs = env.step(action)
-            # sorting_value = env.calculate_sorting()
-            # sorting_values.append(sorting_value)
-            # if sorting_value == 1.0:
-                # last_step = j
-                # break
-        samples.append(sorting_value)
-        print(env.calculate_sorting())
-        # if last_step is None:
-            # print(sorting_values)
+    env = Population(n=n, m=m, k=k, tolerance=tolerance, network=network)
+    agent = Recommender(n=n, gamma=gamma, h=h)
 
-        for node in obs.nodes:
-            obs.nodes[node]["dynamic"] = obs.nodes[node]["dynamic"] / m
-        draw(G=obs, show_fig=True)
+    obs = env.reset()
+    draw(G=obs, m=m, file_name=fig_path+file_name+"_init")
+    last_step = None
+    sorting_values = []
+    for j in range(max_len):
+        action = agent(obs)
+        obs = env.step(action)
+        sorting_values.append(env.calculate_sorting())
+        if all([i >= 1.0 for i in sorting_values[-10:]]):
+            break
 
-    # for node in obs.nodes:
-    #     obs.nodes[node]["dynamic"] = obs.nodes[node]["dynamic"] / m
+    draw(G=obs, m=m, file_name=fig_path+file_name+"_final")
 
-    # draw(G=obs, show_fig=True)
+    with open(csv_path + file_name + ".csv", 'w+') as f:
+        f.write("step,psi")
+        f.writelines([f"\n{i+1},{sorting_values[i]}" for i in range(len(sorting_values))])
 
-    # print(len(samples), np.mean(samples), np.std(samples))
 
-    # sorting_model = SortingModel(n=3, m=256, gamma=1.0)
-	# sorting_model.run(100000)
-	# print(sorting_model.calculate_sorting())
-	# sorting_model.draw(show_fig=True)

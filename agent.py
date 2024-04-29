@@ -4,7 +4,7 @@ import networkx as nx
 
 class Recommender():
 
-    def __init__(self, n, gamma=0.0, h=8, c=1):
+    def __init__(self, n, gamma=0.0, h=8, c=4):
         self.n = n
         self.gamma = gamma
         self.h = h

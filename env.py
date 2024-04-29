@@ -10,7 +10,7 @@ from copy import deepcopy
 
 class Population(gym.Env):
 
-    def __init__(self, n=4, m=10, k=2, speed=0.5, tolerance=1000, network=None, transform=None):
+    def __init__(self, n=4, m=10, k=2, speed=1.0, tolerance=1000, network=None, transform=None):
         self.n = n # Number of dynamic features
         self.m = m # Upper bound for dynamic features
         self.k = k # Upper bound for static features
@@ -100,10 +100,7 @@ class Population(gym.Env):
         index = np.random.choice(n_neighbors)
         source = neighbors[index]
 
-        tolerance_lower_bound = self.state.nodes[source]["dynamic"] - self.tolerance*(1 - self.state.nodes[source]["confidence"])
-        tolerance_upper_bound = self.state.nodes[source]["dynamic"] + self.tolerance*(1 - self.state.nodes[source]["confidence"])
-
-        differences = np.array([1 if (tolerance_lower_bound[i] > self.state.nodes[target]["dynamic"][i] or tolerance_upper_bound[i] < self.state.nodes[target]["dynamic"][i]) else 0 for i in range(self.n)])
+        differences = self._get_differences(source, target)
 
         target_dynamic_features = np.array(self.state.nodes[target]["dynamic"])
 
@@ -116,13 +113,25 @@ class Population(gym.Env):
         old_value = target_dynamic_features[dimension]
         source_value = self.state.nodes[source]["dynamic"][dimension]
 
-        new_value = old_value + int(2*self.speed*(source_value - old_value))
+        new_value = old_value + int(self.speed*(source_value - old_value))
 
         target_dynamic_features[dimension] = new_value
 
-        self.state.nodes[source]["confidence"] = self.state.nodes[source]["confidence"] + (self.speed*(np.sum(differences == 1)/n_neighbors - 0.5))/3
+        similarities = []
+        for neighbor in neighbors:
+            differences = self._get_differences(source, neighbor)
+            similarities.append(np.sum(differences == 0) / len(differences))
+
+        self.state.nodes[source]["confidence"] = self.state.nodes[source]["confidence"] + (self.speed*(np.mean(similarities) - 0.5))/3
 
         return target_dynamic_features
+
+    def _get_differences(self, source, target):
+        margin = self.tolerance*(1 - self.state.nodes[source]["confidence"])
+        tolerance_lower_bound = self.state.nodes[source]["dynamic"] - margin
+        tolerance_upper_bound = self.state.nodes[source]["dynamic"] + margin
+        differences = np.array([1 if (tolerance_lower_bound[i] > self.state.nodes[target]["dynamic"][i] or tolerance_upper_bound[i] < self.state.nodes[target]["dynamic"][i]) else 0 for i in range(self.n)])
+        return differences
 
     def step(self, action):
         assert isinstance(action, nx.DiGraph)

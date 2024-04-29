@@ -1,7 +1,11 @@
 import networkx as nx
+from copy import deepcopy
 import matplotlib.pyplot as plt
 
-def draw(G, file_name="network", show_edges=False, show_fig=False):
+def draw(G, m, file_name="network", show_edges=False, show_fig=False):
+    G = deepcopy(G)
+    for node in G.nodes:
+        G.nodes[node]["dynamic"] = G.nodes[node]["dynamic"] / m
     pos = {node:node for node in G.nodes}
     node_colors = {}
     node_shapes = {}
